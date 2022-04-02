@@ -1,20 +1,22 @@
 # 3D_contact_distribution
 
-This R script plots 5ʹ and 3ʹ distances to the nearest gene for all genes (the background set) and superimposes 5ʹ and 3ʹ distances to the nearest gene for a subset of genes of interest (e.g., RXLRs or some other category of genes).  The code also calculates Monte Carlo statistics to determine whether the intergenic distances of the subset genes differ statistically from the distribution of the background gene set.
+This R script calculates the Hi-C contact distribution for a subset of genes of interest (e.g., RXLRs or some other category of genes).  The code also calculates Monte Carlo statistics to determine whether the 3D contact distribution of the subset genes differs statistically from the distribution of an equivalent set of background genes randomly chosen from the entire gene set.
 
 
 DEPENDENCIES
 
-*2D_FIR_distribution* requires command line access to [grep](https://www.gnu.org/software/grep/manual/grep.html), which will already be installed by default on most UNIX systems, and [bedtools](https://bedtools.readthedocs.io/en/latest/), which can be installed [easily](https://bedtools.readthedocs.io/en/latest/content/installation.html) including through [conda](https://anaconda.org/bioconda/bedtools).  *2D_FIR_distribution* was developed with grep v2.6.0-FreeBSD and bedtools v2.30.0, but uses basic functions that should be compatible with most modern versions.
+*3D_contact_distribution* requires command line access to [grep](https://www.gnu.org/software/grep/manual/grep.html), which will already be installed by default on most UNIX and macOS systems.  *3D_contact_distribution* was developed with grep v2.6.0-FreeBSD, but uses a basic function that should be compatible with most modern versions.
 
-The script also requires the installation of four R packages: GISTools (v0.7-4), grid (v3.6.2), hexbin (v1.28.2) and RColorBrewer (v1.1-2).  All R packages can be installed from [CRAN](https://cran.r-project.org) simply within R.
+The script also requires the installation of one R package: data.table (v1.14.2).  All R packages can easily be installed from [CRAN](https://cran.r-project.org) within R.
 
 
 INPUTS
 
-*2D_FIR_distribution* requires three input files: a GFF3 file of all genes in the genome ('all_gene_file' – the background gene set), a GFF3 file of the subset of genes being studied ('subset_gene_file' – the genes-of-interest gene set), and a bedtools genome file that lists each chromosome/scaffold/contig and its size ('genome_sizes_file').  The genome file is straightforward and is explained [here](https://bedtools.readthedocs.io/en/latest/content/overview.html#what-is-a-genome-file).  Exemplar files are included in this GitHub distribution.
+*3D_contact_distribution* requires three input files: a GFF3 file of all genes in the genome ('all_gene_file' – the background gene set), a GFF3 file of the subset of genes being studied ('subset_gene_file' – the genes-of-interest gene set), and a sparse matrix of 3D contacts between regularly sized windows along the genome as calculated from Hi-C data ('example_matrix.dat'). Sparse matrices can be created from HIC files using [straw](https://github.com/aidenlab/straw).
 
-The script also requires three global variables: a title for the plot (typically the set of genes being analyzed), the maximum intergenic distance to be used for plotting (which allows the exclusion of outliers, if desired), and the number of iterations to be used for the Monte Carlo simulations (typically 10<sup>5</sup> to 10<sup>6</sup>).
+Exeample files are included in this distribution.  Note that due to GitHub file size upload limitations, the sparse matrix example file provided only contains contacts for chromosome 1.  Contacts for genes outside chromosome 1 will thus return as zero.  For proper usage, a full sparse matrix for the entire genome should be used.
+
+The script also requires three global variables: the window ('bin') size used to create the sparse matrix of 3D contacts, the maximum number of pairwise contacts to consider in the subset and simulated gene set, and the number of iterations to be used for the Monte Carlo simulations (typically 10<sup>4</sup> to 10<sup>5</sup>).  The 'max.number' setting is necessary because pairwise comparisons increase exponentially as each new gene is added; for large gene subsets, it may be necessary to limit the number of pairwise comparisons being considered.
 
 Exemplars for all these inputs are shown in the worked example below.
 
@@ -24,7 +26,7 @@ USAGE
 Program usage, from the UNIX command line, is as follows:
 
 ```
-2D_FIR_distribution.R
+3D_contact_distribution.R
 ```
 
 The script can also be run directly in an R console.
@@ -32,16 +34,16 @@ The script can also be run directly in an R console.
 
 EXAMPLE
 
-*2D_FIR_distribution* produces two outputs.
-
-First, the probabilities that the median distance to the nearest gene for the subset genes is greater than or less than that expected for the same number of random genes (calculated via a bootstrap with replacement).
+*3D_contact_distribution* produces one output: the probabilities that the median number of contacts between the subset genes is greater than or less than that expected for the same number of randomly chosen genes (calculated via a bootstrap with replacement).
 
 ```
-Greater than 727.5 : p = 0.0984
-Less than 727.5 : p = 0.902
+Greater than 193 : p = 0
+Less than 193 : p = 1
 ```
 
-Second, a 2D density plot showing the background distribution of 5ʹ and 3ʹ distances for all genes, with 5ʹ and 5ʹ distances for the subset genes superimposed as red points.
+Note that in this example the subset genes are all adjacent along a chromosome, and therefore have a large number of contacts with each other (a median of 193).  In comparisons, randomly chosen genes across the genome typically have 0-1 contacts.  Hence the observed distribution for this subset of genes is notably different from the random distribution.  This may differ, likely quite markedly, for other subsets of genes.
 
-![Example Simulation Figure](example_plot.jpg)
 
+SPEED
+
+Note that the Monte Carlo simulation is *slow*. Profiling shows that ~99% of runtime is used to identify required rows in the sparse matrix.  In the 'data.table' package, this function is already heavily optimized, so cannot easily be improved upon.  It seems that the only feasible option to improve runtime is to reduce the size of the sparse matrix, by using larger window bins.  This effect is exponential; doubling the window size reduces the overall matrix size fourfold. However, because the data form is a sparse matrix (where zero contact windows are inferred but not explicitly written as a record), this improvement will diminish as the window size increaases and most windows include at least one contact.  In some scenarios, changing the 'max.number' setting may also decrease runtime. However, setting this variable too low will negatively affect statistical accuracy.
