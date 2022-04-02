@@ -66,8 +66,8 @@ find_contacts <- function(contact.matrix, gene1.chr, gene1.start, gene1.stop, ge
 
 # find median number of contacts between all (or a reduced set of) non-self pairs
 # note: function is *slow*
-#       profiling shows 87% of runtime is 'which' identifying the needed row in the matrix
-#       'which' is already heavily optimized, so it is hard to improve this
+#       profiling shows ~99% of runtime is identifying the required row in the sparse matrix
+#       in data.table, this function is already heavily optimized, so it is hard to improve this
 #       the only feasible option seems to be to reduce the size of the matrix, by using larger window bins
 median_contacts <- function(gene.dataset, contact.matrix, max.number){
 
@@ -185,8 +185,8 @@ med.subset
 
 
 # run monte carlo
-Rprof()
+start_time <- Sys.time()
 medians <- monte_carlo(d, m, length(s$chr), max.number, iterations, med.subset)
-Rprof(NULL)
-summaryRprof()
+end_time <- Sys.time()
+end_time - start_time
 
