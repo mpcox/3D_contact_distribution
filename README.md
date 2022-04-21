@@ -16,7 +16,7 @@ INPUTS
 
 Example files are included in this distribution.  Note that due to GitHub file size upload limitations, the sparse matrix example file provided only contains contacts for chromosome 1.  Contacts for genes outside chromosome 1 will thus return as zero.  For proper usage, a full sparse matrix for the entire genome should be used.
 
-The script also requires three global variables: the window ('bin') size used to create the sparse matrix of 3D contacts; the maximum number of pairwise contacts to consider in the gene-of-interest subset and Monte Carlo simulated gene set; and the number of iterations to be used for the Monte Carlo simulations (typically 10<sup>4</sup> to 10<sup>5</sup>).  The 'max.number' setting is needed because pairwise comparisons increase exponentially as each new gene is added; for large gene subsets, it may be necessary to limit the number of pairwise comparisons being considered.
+The script also requires four global variables: the window ('bin') size used to create the sparse matrix of 3D contacts; the maximum number of pairwise contacts to consider in the gene-of-interest subset and Monte Carlo simulated gene set; the number of iterations to be used for the Monte Carlo simulations (typically 10<sup>4</sup> to 10<sup>5</sup>); and the summary statistic for comparison (the default is 'mean' with alternative 'median').  The 'max.number' setting is needed because pairwise comparisons increase exponentially as each new gene is added; for large gene subsets, it may be necessary to limit the number of pairwise comparisons being considered.
 
 Exemplars for all these inputs are shown in the worked example below.
 
@@ -34,14 +34,14 @@ The script can also be run directly in an R console.
 
 EXAMPLE
 
-*3D_contact_distribution* produces one output: the probabilities that the median number of contacts between the subset genes is greater than or less than that expected for the same number of randomly chosen genes (calculated via a bootstrap with replacement).
+*3D_contact_distribution* produces one output: the probabilities that the mean (or median) number of contacts between the subset genes is greater than or less than that expected for the same number of randomly chosen genes (calculated via a bootstrap with replacement).  Here is an example with the 'median' setting:
 
 ```
 Greater than 193 : p = 0
 Less than 193 : p = 1
 ```
 
-Note that in this example the subset genes are all adjacent along a chromosome, and therefore have a large number of contacts with each other (a median of 193).  In comparisons, randomly chosen genes across the genome typically have 0-1 contacts.  Hence the observed distribution for this subset of genes is notably different from the random distribution.  This may differ, likely quite markedly, for other subsets of genes.
+Note that in this example the subset genes are all adjacent along a chromosome, and therefore have a large number of contacts with each other (a median of 193).  In comparisons, randomly chosen genes across the genome typically have 0-1 contacts.  Hence the observed distribution for this subset of genes is notably different from the random distribution.  This may differ, likely quite markedly, for other subsets of genes.  Because most gene pairs have zero contacts, the 'median' setting is dominated by these zero cases and often washes out other signals.  The 'mean' setting is often much more informative.
 
 
 RUNTIME SPEED
